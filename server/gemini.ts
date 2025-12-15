@@ -1,25 +1,46 @@
 import { GoogleGenAI, type ThinkingLevel } from '@google/genai'
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || ''
-})
+let ai: GoogleGenAI | null = null
+
+function getAI(): GoogleGenAI {
+  if (!ai) {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not set')
+    }
+    console.log('🤖 Initializing Gemini AI...')
+    ai = new GoogleGenAI({ apiKey })
+  }
+  return ai
+}
 
 // 深度分析模型配置 (gemini-3-pro-preview with thinking)
-export const analysisConfig = {
+const analysisConfig = {
   thinkingConfig: {
     thinkingLevel: 'high' as ThinkingLevel
   }
 }
 
 // 快速问答模型配置
-export const chatConfig = {
+const chatConfig = {
   thinkingConfig: {
     thinkingLevel: 'low' as ThinkingLevel
   }
 }
 
+interface TokenUsage {
+  promptTokens: number
+  responseTokens: number
+  thinkingTokens: number
+  totalTokens: number
+}
+
+function logTokenUsage(model: string, usage: TokenUsage) {
+  console.log(`📊 [${model}] Token消耗: 输入=${usage.promptTokens} 输出=${usage.responseTokens} 思考=${usage.thinkingTokens} 总计=${usage.totalTokens}`)
+}
+
 export async function generateAnalysis(prompt: string): Promise<string> {
-  const response = await ai.models.generateContentStream({
+  const response = await getAI().models.generateContentStream({
     model: 'gemini-3-pro-preview',
     config: analysisConfig,
     contents: [{
@@ -29,16 +50,32 @@ export async function generateAnalysis(prompt: string): Promise<string> {
   })
 
   let result = ''
+  let usageMetadata: unknown = null
+  
   for await (const chunk of response) {
     result += chunk.text || ''
+    if (chunk.usageMetadata) {
+      usageMetadata = chunk.usageMetadata
+    }
   }
+  
+  // 打印token消耗
+  if (usageMetadata) {
+    const meta = usageMetadata as Record<string, number>
+    logTokenUsage('gemini-3-pro', {
+      promptTokens: meta.promptTokenCount || 0,
+      responseTokens: meta.candidatesTokenCount || 0,
+      thinkingTokens: meta.thoughtsTokenCount || 0,
+      totalTokens: meta.totalTokenCount || 0
+    })
+  }
+  
   return result
 }
 
 export async function generateChat(prompt: string): Promise<string> {
-  const response = await ai.models.generateContentStream({
+  const response = await getAI().models.generateContentStream({
     model: 'gemini-2.5-flash',
-    config: chatConfig,
     contents: [{
       role: 'user',
       parts: [{ text: prompt }]
@@ -46,30 +83,34 @@ export async function generateChat(prompt: string): Promise<string> {
   })
 
   let result = ''
+  let usageMetadata: unknown = null
+  
   for await (const chunk of response) {
     result += chunk.text || ''
+    if (chunk.usageMetadata) {
+      usageMetadata = chunk.usageMetadata
+    }
   }
+  
+  // 打印token消耗
+  if (usageMetadata) {
+    const meta = usageMetadata as Record<string, number>
+    logTokenUsage('gemini-2.5-flash', {
+      promptTokens: meta.promptTokenCount || 0,
+      responseTokens: meta.candidatesTokenCount || 0,
+      thinkingTokens: meta.thoughtsTokenCount || 0,
+      totalTokens: meta.totalTokenCount || 0
+    })
+  }
+  
   return result
 }
 
 export function buildNewsContext(articles: unknown[]): string {
-  return JSON.stringify(articles, null, 2)
+  // 压缩JSON，无空格无换行
+  return JSON.stringify(articles)
 }
 
-export const SYSTEM_PROMPT = `你是一个专业的舆情分析助手。你的任务是基于提供的新闻数据回答问题。
-
-重要规则：
-1. 只基于提供的数据回答，不要编造信息
-2. 如果数据中没有相关信息，明确说明"数据中未找到相关信息"
-3. 引用具体新闻时，提供标题和来源
-4. 使用中文回答
-5. 回答要简洁、有条理
-
-数据字段说明：
-- platform: 数据来源平台
-- rank: 在该平台的排名
-- heat/score: 热度值
-- trend: 趋势 (new=新上榜, rising=上升, stable=稳定, falling=下降)
-- rank_change: 排名变化 (正数=上升, 负数=下降)
-- momentum: 动量分数 (0-100)
-`
+export const SYSTEM_PROMPT = `你是舆情分析助手。基于提供的新闻数据回答问题。
+规则：1.只基于数据回答,不编造 2.无相关信息时明确说明 3.引用时提供标题 4.中文回答 5.简洁有条理
+数据字段：t=标题,d=描述,r=排名(数字越小越热),s=板块/平台`

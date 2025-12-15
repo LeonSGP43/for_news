@@ -63,13 +63,10 @@ export async function getSections() {
 
 export async function getArticlesForAI(hours = 1) {
   const sql = `
-    SELECT 
-      id, title, description, source, platform, section,
-      \`rank\`, heat, score, trend, rank_change, momentum,
-      time_str, datetime, scraped_at
+    SELECT title as t, description as d, \`rank\` as r, section as s
     FROM news_articles 
     WHERE scraped_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)
-    ORDER BY platform, \`rank\` ASC
+    ORDER BY section, \`rank\` ASC
     LIMIT 2000
   `
   return query(sql, [hours])
