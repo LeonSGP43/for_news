@@ -22,13 +22,13 @@ export default function AnalysisDashboard() {
     cross_platform: { name: t.crossPlatform, icon: '🔗' }
   }
 
-  const loadAnalysis = async (forceRefresh = false) => {
+  const loadAnalysis = async (forceRefresh = false, currentLocale = locale) => {
     setIsLoading(true)
     try {
       if (forceRefresh) {
-        await refreshAnalysis(locale)
+        await refreshAnalysis(currentLocale)
       }
-      const result = await runAllAnalysis(locale)
+      const result = await runAllAnalysis(currentLocale)
       setData(result)
     } catch (err) {
       console.error('Failed to load analysis:', err)
@@ -37,9 +37,10 @@ export default function AnalysisDashboard() {
     }
   }
 
+  // 语言变化时重新加载分析
   useEffect(() => {
-    loadAnalysis()
-  }, [])
+    loadAnalysis(true, locale)
+  }, [locale])
 
   const taskIds = Object.keys(TASK_INFO)
 

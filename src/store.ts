@@ -25,7 +25,7 @@ interface AppState {
   setLocale: (locale: Locale) => void
 }
 
-const initialLocale = typeof window !== 'undefined' ? detectLocale() : 'zh'
+const initialLocale = typeof window !== 'undefined' ? detectLocale() : 'en'
 
 export const useStore = create<AppState>((set) => ({
   articles: [],

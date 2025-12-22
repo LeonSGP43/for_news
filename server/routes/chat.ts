@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { getArticlesForAI } from '../db'
 import { generateChat, buildNewsContext } from '../gemini'
 import { getNewsCache, setNewsCache } from '../cache'
-import { type Locale, chatPrompt } from '../i18n'
+import { type Locale, getChatPrompt } from '../i18n'
 
 export const chatRouter = Router()
 
@@ -43,7 +43,7 @@ async function refreshCache(hours: number) {
 
 chatRouter.post('/chat', async (req, res) => {
   try {
-    const { question, hours = 24, locale = 'zh' } = req.body as { 
+    const { question, hours = 24, locale = 'en' } = req.body as { 
       question: string
       hours?: number
       locale?: Locale 
@@ -53,7 +53,7 @@ chatRouter.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'Question is required' })
     }
 
-    const systemPrompt = chatPrompt[locale] || chatPrompt.zh
+    const systemPrompt = getChatPrompt(locale)
 
     // 检查缓存是否有效
     let cache = getNewsCache()
