@@ -1,7 +1,11 @@
 // 必须在最开始加载环境变量
 import dotenv from 'dotenv'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
 dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // 打印确认
 console.log('📦 ENV loaded:', {
@@ -19,12 +23,12 @@ import { chatRouter } from './routes/chat'
 import { webhookRouter } from './routes/webhook'
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3111
 
 app.use(cors())
 app.use(express.json())
 
-// Routes
+// API Routes
 app.use('/api', articlesRouter)
 app.use('/api/analysis', analysisRouter)
 app.use('/api', chatRouter)
@@ -33,6 +37,15 @@ app.use('/api', webhookRouter)
 // Health check
 app.get('/api/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// 提供前端静态文件
+const distPath = path.join(__dirname, '../dist')
+app.use(express.static(distPath))
+
+// SPA 路由：所有非 API 请求返回 index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'))
 })
 
 // 初始化数据库连接后再启动服务
