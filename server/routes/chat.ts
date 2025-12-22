@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { getArticlesForAI } from '../db'
-import { generateChat, buildNewsContext, SYSTEM_PROMPT } from '../gemini'
+import { generateChat, buildNewsContext } from '../gemini'
 import { getNewsCache, setNewsCache } from '../cache'
+import { type Locale, chatPrompt } from '../i18n'
 
 export const chatRouter = Router()
 
@@ -26,7 +27,7 @@ function buildCompactSummary(articles: Array<{ t: string; s: string }>): string 
 // 刷新缓存
 async function refreshCache(hours: number) {
   const articles = await getArticlesForAI(hours)
-  const sections = [...new Set(articles.map((a: { s: string }) => a.s).filter(Boolean))]
+  const sections = [...new Set((articles as Array<{ s: string }>).map((a) => a.s).filter(Boolean))]
   const summary = buildCompactSummary(articles as Array<{ t: string; s: string }>)
   
   setNewsCache({
@@ -42,11 +43,17 @@ async function refreshCache(hours: number) {
 
 chatRouter.post('/chat', async (req, res) => {
   try {
-    const { question, hours = 24 } = req.body  // 默认24小时
+    const { question, hours = 24, locale = 'zh' } = req.body as { 
+      question: string
+      hours?: number
+      locale?: Locale 
+    }
     
     if (!question) {
       return res.status(400).json({ error: 'Question is required' })
     }
+
+    const systemPrompt = chatPrompt[locale] || chatPrompt.zh
 
     // 检查缓存是否有效
     let cache = getNewsCache()
@@ -59,14 +66,12 @@ chatRouter.post('/chat', async (req, res) => {
       cache = getNewsCache()!
     }
     
-    const prompt = `${SYSTEM_PROMPT}
+    const prompt = `${systemPrompt}
 
-新闻摘要(${cache.articleCount}条,过去${hours}小时):
+News data (${cache.articleCount} items, last ${hours} hours):
 ${cache.summary}
 
-问题:${question}
-
-简洁回答,引用相关标题。`
+Question: ${question}`
 
     const answer = await generateChat(prompt)
     res.json({ answer, cacheInfo: { articleCount: cache.articleCount, hours } })

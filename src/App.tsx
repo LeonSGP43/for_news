@@ -4,12 +4,13 @@ import { fetchArticles, fetchPlatforms } from './api'
 import NewsFeed from './components/NewsFeed'
 import AnalysisDashboard from './components/AnalysisDashboard'
 import GlobalSearch from './components/GlobalSearch'
+import { locales } from './i18n'
 
 type Tab = 'feed' | 'analysis'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('feed')
-  const { setArticles, setPlatforms, setLastUpdated, setIsLoading, lastUpdated, isLoading } = useStore()
+  const { setArticles, setPlatforms, setLastUpdated, setIsLoading, lastUpdated, isLoading, locale, setLocale, t } = useStore()
 
   const loadData = async () => {
     setIsLoading(true)
@@ -20,7 +21,7 @@ export default function App() {
       ])
       setArticles(articles)
       setPlatforms(platforms)
-      setLastUpdated(new Date().toLocaleString('zh-CN'))
+      setLastUpdated(new Date().toLocaleString(locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US'))
     } catch (err) {
       console.error('Failed to load data:', err)
     } finally {
@@ -35,8 +36,8 @@ export default function App() {
   }, [])
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'feed', label: '📰 数据' },
-    { key: 'analysis', label: '📊 分析' }
+    { key: 'feed', label: t.tabFeed },
+    { key: 'analysis', label: t.tabAnalysis }
   ]
 
   return (
@@ -66,15 +67,26 @@ export default function App() {
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* 语言切换 */}
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as typeof locale)}
+              className="bg-neutral-900 text-neutral-400 text-xs px-2 py-1 rounded border border-neutral-800 focus:outline-none"
+            >
+              {locales.map(l => (
+                <option key={l.code} value={l.code}>{l.name}</option>
+              ))}
+            </select>
+            
             <span className="text-xs text-neutral-500">
-              {isLoading ? '加载中...' : `更新: ${lastUpdated}`}
+              {isLoading ? t.loading : `${t.update}: ${lastUpdated}`}
             </span>
             <button
               onClick={loadData}
               disabled={isLoading}
               className="p-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 rounded text-sm"
-              title="刷新数据"
+              title={t.refresh}
             >
               🔄
             </button>

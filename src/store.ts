@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { NewsArticle, AnalysisResult, ChatMessage } from './types'
+import { type Locale, detectLocale, getTranslation } from './i18n'
 
 interface AppState {
   articles: NewsArticle[]
@@ -10,6 +11,8 @@ interface AppState {
   chatTimeRange: number
   isLoading: boolean
   lastUpdated: string | null
+  locale: Locale
+  t: ReturnType<typeof getTranslation>
   
   setArticles: (articles: NewsArticle[]) => void
   setPlatforms: (platforms: string[]) => void
@@ -19,7 +22,10 @@ interface AppState {
   setChatTimeRange: (hours: number) => void
   setIsLoading: (loading: boolean) => void
   setLastUpdated: (time: string) => void
+  setLocale: (locale: Locale) => void
 }
+
+const initialLocale = typeof window !== 'undefined' ? detectLocale() : 'zh'
 
 export const useStore = create<AppState>((set) => ({
   articles: [],
@@ -30,6 +36,8 @@ export const useStore = create<AppState>((set) => ({
   chatTimeRange: 1,
   isLoading: false,
   lastUpdated: null,
+  locale: initialLocale,
+  t: getTranslation(initialLocale),
 
   setArticles: (articles) => set({ articles }),
   setPlatforms: (platforms) => set({ platforms }),
@@ -42,5 +50,9 @@ export const useStore = create<AppState>((set) => ({
   })),
   setChatTimeRange: (hours) => set({ chatTimeRange: hours }),
   setIsLoading: (loading) => set({ isLoading: loading }),
-  setLastUpdated: (time) => set({ lastUpdated: time })
+  setLastUpdated: (time) => set({ lastUpdated: time }),
+  setLocale: (locale) => {
+    localStorage.setItem('locale', locale)
+    set({ locale, t: getTranslation(locale) })
+  }
 }))

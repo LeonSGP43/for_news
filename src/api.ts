@@ -24,24 +24,29 @@ export async function runAnalysis(taskId: string): Promise<AnalysisResult> {
   return res.json()
 }
 
-export async function runAllAnalysis(): Promise<{ results: Record<string, string>; generatedAt: string }> {
-  const res = await fetch(`${API_BASE}/analysis/all`)
+export async function runAllAnalysis(locale = 'zh'): Promise<{ results: Record<string, string>; generatedAt: string }> {
+  const res = await fetch(`${API_BASE}/analysis/all?locale=${locale}`)
   if (!res.ok) throw new Error('Analysis failed')
   return res.json()
 }
 
-export async function refreshAnalysis(): Promise<void> {
-  await fetch(`${API_BASE}/analysis/refresh`, { method: 'POST' })
+export async function refreshAnalysis(locale = 'zh'): Promise<void> {
+  await fetch(`${API_BASE}/analysis/refresh`, { 
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ locale })
+  })
 }
 
 export async function chat(
   question: string, 
-  hours: number
+  hours: number,
+  locale = 'zh'
 ): Promise<string> {
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, hours })
+    body: JSON.stringify({ question, hours, locale })
   })
   if (!res.ok) throw new Error('Chat failed')
   const data = await res.json()

@@ -1,32 +1,34 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { runAllAnalysis, refreshAnalysis } from '../api'
+import { useStore } from '../store'
 
 interface AnalysisResults {
   results: Record<string, string>
   generatedAt: string
 }
 
-const TASK_INFO: Record<string, { name: string; icon: string }> = {
-  hot_keywords: { name: '热词分析', icon: '🔥' },
-  sentiment: { name: '情感分析', icon: '😊' },
-  trending: { name: '趋势预测', icon: '📈' },
-  summary: { name: '综合摘要', icon: '📋' },
-  cross_platform: { name: '跨板块分析', icon: '🔗' }
-}
-
 export default function AnalysisDashboard() {
   const [data, setData] = useState<AnalysisResults | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTask, setActiveTask] = useState<string>('summary')
+  const { t, locale } = useStore()
+
+  const TASK_INFO: Record<string, { name: string; icon: string }> = {
+    hot_keywords: { name: t.hotKeywords, icon: '🔥' },
+    sentiment: { name: t.sentiment, icon: '😊' },
+    trending: { name: t.trending, icon: '📈' },
+    summary: { name: t.summary, icon: '📋' },
+    cross_platform: { name: t.crossPlatform, icon: '🔗' }
+  }
 
   const loadAnalysis = async (forceRefresh = false) => {
     setIsLoading(true)
     try {
       if (forceRefresh) {
-        await refreshAnalysis()
+        await refreshAnalysis(locale)
       }
-      const result = await runAllAnalysis()
+      const result = await runAllAnalysis(locale)
       setData(result)
     } catch (err) {
       console.error('Failed to load analysis:', err)
@@ -65,7 +67,7 @@ export default function AnalysisDashboard() {
           disabled={isLoading}
           className="px-3 py-1.5 bg-white text-black hover:bg-neutral-200 disabled:bg-neutral-800 disabled:text-neutral-500 rounded-lg text-xs"
         >
-          {isLoading ? '分析中...' : '🔄 重新分析'}
+          {isLoading ? t.analyzing : t.reAnalyze}
         </button>
       </div>
 
@@ -77,7 +79,7 @@ export default function AnalysisDashboard() {
             <h2 className="font-medium text-neutral-100">{TASK_INFO[activeTask]?.name}</h2>
           </div>
           {data?.generatedAt && (
-            <span className="text-xs text-neutral-500">生成于 {data.generatedAt}</span>
+            <span className="text-xs text-neutral-500">{data.generatedAt}</span>
           )}
         </div>
         
@@ -90,7 +92,7 @@ export default function AnalysisDashboard() {
                   <span className="w-3 h-3 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
                   <span className="w-3 h-3 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                 </div>
-                <p className="text-neutral-500">AI 正在分析...</p>
+                <p className="text-neutral-500">{t.aiAnalyzing}</p>
               </div>
             </div>
           ) : data?.results?.[activeTask] ? (
@@ -101,7 +103,7 @@ export default function AnalysisDashboard() {
             <div className="flex items-center justify-center h-64 text-neutral-500">
               <div className="text-center">
                 <p className="text-4xl mb-3">📊</p>
-                <p>点击"重新分析"开始</p>
+                <p>{t.clickToAnalyze}</p>
               </div>
             </div>
           )}

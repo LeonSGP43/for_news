@@ -21,6 +21,7 @@ import { articlesRouter } from './routes/articles'
 import { analysisRouter } from './routes/analysis'
 import { chatRouter } from './routes/chat'
 import { webhookRouter } from './routes/webhook'
+import { traceRouter } from './routes/trace'
 
 const app = express()
 const PORT = process.env.PORT || 3111
@@ -33,6 +34,7 @@ app.use('/api', articlesRouter)
 app.use('/api/analysis', analysisRouter)
 app.use('/api', chatRouter)
 app.use('/api', webhookRouter)
+app.use('/api', traceRouter)
 
 // Health check
 app.get('/api/health', (_, res) => {

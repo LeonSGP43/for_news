@@ -110,7 +110,3 @@ export function buildNewsContext(articles: unknown[]): string {
   // 压缩JSON，无空格无换行
   return JSON.stringify(articles)
 }
-
-export const SYSTEM_PROMPT = `你是舆情分析助手。基于提供的新闻数据回答问题。
-规则：1.只基于数据回答,不编造 2.无相关信息时明确说明 3.引用时提供标题 4.中文回答 5.简洁有条理
-数据字段：t=标题,d=描述,r=排名(数字越小越热),s=板块/平台`

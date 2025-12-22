@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useStore } from '../store'
 import type { NewsArticle } from '../types'
+import TraceModal from './TraceModal'
 
 function getTrendIcon(trend: string | null) {
   switch (trend) {
@@ -20,16 +22,24 @@ function formatHeat(heat: number | null, score: number | null) {
   return value.toString()
 }
 
-function ArticleCard({ article, index, showRank = true }: { article: NewsArticle; index: number; showRank?: boolean }) {
+function ArticleCard({ 
+  article, 
+  index, 
+  showRank = true,
+  onClick 
+}: { 
+  article: NewsArticle
+  index: number
+  showRank?: boolean
+  onClick: () => void
+}) {
   const heatDisplay = formatHeat(article.heat, article.score)
   const trendIcon = getTrendIcon(article.trend)
   
   return (
-    <a
-      href={article.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex items-start gap-3 p-3 rounded-lg hover:bg-neutral-800/50 transition-all"
+    <div
+      onClick={onClick}
+      className="group flex items-start gap-3 p-3 rounded-lg hover:bg-neutral-800/50 transition-all cursor-pointer"
     >
       {/* 排名 */}
       {showRank && (
@@ -65,11 +75,19 @@ function ArticleCard({ article, index, showRank = true }: { article: NewsArticle
           )}
         </div>
       </div>
-    </a>
+    </div>
   )
 }
 
-function SectionCard({ section, articles }: { section: string; articles: NewsArticle[] }) {
+function SectionCard({ 
+  section, 
+  articles,
+  onArticleClick 
+}: { 
+  section: string
+  articles: NewsArticle[]
+  onArticleClick: (article: NewsArticle) => void
+}) {
   return (
     <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
       {/* 标题栏 */}
@@ -86,21 +104,36 @@ function SectionCard({ section, articles }: { section: string; articles: NewsArt
       {/* 列表 */}
       <div className="divide-y divide-neutral-800/50 max-h-[500px] overflow-y-auto">
         {articles.slice(0, 15).map((article, idx) => (
-          <ArticleCard key={article.id} article={article} index={idx} />
+          <ArticleCard 
+            key={article.id} 
+            article={article} 
+            index={idx}
+            onClick={() => onArticleClick(article)}
+          />
         ))}
       </div>
     </div>
   )
 }
 
-function MergedSectionCard({ articles, sections }: { articles: NewsArticle[]; sections: string[] }) {
+function MergedSectionCard({ 
+  articles, 
+  sections,
+  onArticleClick,
+  otherLabel
+}: { 
+  articles: NewsArticle[]
+  sections: string[]
+  onArticleClick: (article: NewsArticle) => void
+  otherLabel: string
+}) {
   return (
     <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
       {/* 标题栏 */}
       <div className="px-4 py-3 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-1 h-4 bg-neutral-400 rounded-full" />
-          <h2 className="font-medium text-neutral-100">其他热点</h2>
+          <h2 className="font-medium text-neutral-100">{otherLabel}</h2>
         </div>
         <span className="text-xs text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded-full">
           {sections.join(' · ')}
@@ -111,7 +144,12 @@ function MergedSectionCard({ articles, sections }: { articles: NewsArticle[]; se
       <div className="divide-y divide-neutral-800/50 max-h-[500px] overflow-y-auto">
         {articles.slice(0, 15).map((article, idx) => (
           <div key={article.id} className="relative">
-            <ArticleCard article={article} index={idx} showRank={false} />
+            <ArticleCard 
+              article={article} 
+              index={idx} 
+              showRank={false}
+              onClick={() => onArticleClick(article)}
+            />
             {/* 来源标签 */}
             <span className="absolute top-3 right-3 text-[10px] text-neutral-500 bg-neutral-800 px-1.5 py-0.5 rounded">
               {article.section}
@@ -124,7 +162,8 @@ function MergedSectionCard({ articles, sections }: { articles: NewsArticle[]; se
 }
 
 export default function NewsFeed() {
-  const { articles, platforms, selectedPlatform, setSelectedPlatform } = useStore()
+  const { articles, platforms, selectedPlatform, setSelectedPlatform, t } = useStore()
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null)
 
   // 按 section 分组
   const groupedBySection = articles.reduce((acc, article) => {
@@ -181,7 +220,7 @@ export default function NewsFeed() {
               : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
           }`}
         >
-          全部 ({totalCount})
+          {t.all} ({totalCount})
         </button>
         {platforms.map((section) => (
           <button
@@ -204,21 +243,33 @@ export default function NewsFeed() {
           <SectionCard 
             key={section} 
             section={section} 
-            articles={groupedBySection[section] || []} 
+            articles={groupedBySection[section] || []}
+            onArticleClick={setSelectedArticle}
           />
         ))}
         {/* 合并的小列表 */}
         {!selectedPlatform && mergedArticles.length > 0 && (
-          <MergedSectionCard articles={mergedArticles} sections={smallSections} />
+          <MergedSectionCard 
+            articles={mergedArticles} 
+            sections={smallSections}
+            onArticleClick={setSelectedArticle}
+            otherLabel={t.otherHot}
+          />
         )}
       </div>
       
       {displaySections.length === 0 && mergedArticles.length === 0 && (
         <div className="text-center py-20 text-neutral-500">
           <p className="text-4xl mb-4">📭</p>
-          <p>暂无数据</p>
+          <p>{t.noData}</p>
         </div>
       )}
+
+      {/* 溯源弹窗 */}
+      <TraceModal 
+        article={selectedArticle} 
+        onClose={() => setSelectedArticle(null)} 
+      />
     </div>
   )
 }

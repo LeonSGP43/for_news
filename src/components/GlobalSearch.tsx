@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { chat } from '../api'
+import { useStore } from '../store'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -14,6 +15,7 @@ export default function GlobalSearch() {
   const [isExpanded, setIsExpanded] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { t, locale } = useStore()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -44,10 +46,10 @@ export default function GlobalSearch() {
     setIsExpanded(true)
     
     try {
-      const answer = await chat(userMessage, 24)
+      const answer = await chat(userMessage, 24, locale)
       setMessages(prev => [...prev, { role: 'assistant', content: answer }])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，查询失败，请稍后重试。' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: t.chatError }])
     } finally {
       setIsLoading(false)
     }
@@ -59,14 +61,14 @@ export default function GlobalSearch() {
       {isExpanded && (
         <div className="fixed bottom-28 right-4 w-[420px] max-h-[65vh] bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl z-50 flex flex-col">
           <div className="flex items-center justify-between p-3 border-b border-neutral-800">
-            <span className="font-medium text-neutral-200">💬 舆情问答 (24h)</span>
+            <span className="font-medium text-neutral-200">{t.chatTitle}</span>
             <div className="flex gap-2">
               {messages.length > 0 && (
                 <button
                   onClick={() => setMessages([])}
                   className="text-xs text-neutral-400 hover:text-white px-2 py-1 bg-neutral-800 rounded"
                 >
-                  清空
+                  {t.clear}
                 </button>
               )}
               <button
@@ -82,8 +84,8 @@ export default function GlobalSearch() {
             {messages.length === 0 ? (
               <div className="text-center text-neutral-500 py-8">
                 <p className="text-lg mb-2">🔍</p>
-                <p>问我任何关于新闻的问题</p>
-                <p className="text-xs mt-1 text-neutral-600">基于过去24小时数据回答</p>
+                <p>{t.chatEmpty}</p>
+                <p className="text-xs mt-1 text-neutral-600">{t.chatEmptyHint}</p>
               </div>
             ) : (
               messages.map((msg, idx) => (
@@ -134,7 +136,7 @@ export default function GlobalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsExpanded(true)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="问我任何问题... ⌘K"
+          placeholder={t.chatPlaceholder}
           className="flex-1 px-4 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus:outline-none focus:border-neutral-500 text-neutral-100 placeholder-neutral-500 text-sm"
         />
         <button
@@ -142,7 +144,7 @@ export default function GlobalSearch() {
           disabled={isLoading || !query.trim()}
           className="px-4 py-2 bg-white text-black hover:bg-neutral-200 disabled:bg-neutral-800 disabled:text-neutral-500 rounded-lg text-sm"
         >
-          发送
+          {t.send}
         </button>
       </div>
       
