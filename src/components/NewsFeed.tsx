@@ -20,7 +20,7 @@ function formatHeat(heat: number | null, score: number | null) {
   return value.toString()
 }
 
-function ArticleCard({ article, index }: { article: NewsArticle; index: number }) {
+function ArticleCard({ article, index, showRank = true }: { article: NewsArticle; index: number; showRank?: boolean }) {
   const heatDisplay = formatHeat(article.heat, article.score)
   const trendIcon = getTrendIcon(article.trend)
   
@@ -29,35 +29,37 @@ function ArticleCard({ article, index }: { article: NewsArticle; index: number }
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-start gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-all"
+      className="group flex items-start gap-3 p-3 rounded-lg hover:bg-neutral-800/50 transition-all"
     >
       {/* 排名 */}
-      <div className={`flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${
-        index < 3 ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white' : 'bg-gray-700 text-gray-400'
-      }`}>
-        {article.rank ?? index + 1}
-      </div>
+      {showRank && (
+        <div className={`flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${
+          index < 3 ? 'bg-white text-black' : 'bg-neutral-800 text-neutral-400'
+        }`}>
+          {article.rank ?? index + 1}
+        </div>
+      )}
       
       {/* 内容 */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm text-gray-200 group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+        <h3 className="text-sm text-neutral-200 group-hover:text-white transition-colors line-clamp-2 leading-snug">
           {trendIcon && <span className="mr-1">{trendIcon}</span>}
           {article.title}
         </h3>
         
         {/* 元信息 */}
-        <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+        <div className="flex items-center gap-2 mt-1.5 text-xs text-neutral-500">
           {article.source && (
             <span className="truncate max-w-[100px]">{article.source}</span>
           )}
           {heatDisplay && (
-            <span className="text-orange-400">{heatDisplay}</span>
+            <span className="text-neutral-400">{heatDisplay}</span>
           )}
           {article.time_str && (
             <span>{article.time_str}</span>
           )}
           {article.rank_change !== null && article.rank_change !== 0 && (
-            <span className={article.rank_change > 0 ? 'text-green-400' : 'text-red-400'}>
+            <span className={article.rank_change > 0 ? 'text-neutral-300' : 'text-neutral-500'}>
               {article.rank_change > 0 ? `↑${article.rank_change}` : `↓${Math.abs(article.rank_change)}`}
             </span>
           )}
@@ -69,22 +71,52 @@ function ArticleCard({ article, index }: { article: NewsArticle; index: number }
 
 function SectionCard({ section, articles }: { section: string; articles: NewsArticle[] }) {
   return (
-    <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden">
+    <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
       {/* 标题栏 */}
-      <div className="px-4 py-3 bg-gray-800/50 border-b border-gray-700/50 flex items-center justify-between">
+      <div className="px-4 py-3 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-1 h-4 bg-blue-500 rounded-full" />
-          <h2 className="font-medium text-gray-200">{section}</h2>
+          <div className="w-1 h-4 bg-white rounded-full" />
+          <h2 className="font-medium text-neutral-100">{section}</h2>
         </div>
-        <span className="text-xs text-gray-500 bg-gray-700/50 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded-full">
           {articles.length}
         </span>
       </div>
       
       {/* 列表 */}
-      <div className="divide-y divide-gray-700/30 max-h-[500px] overflow-y-auto">
+      <div className="divide-y divide-neutral-800/50 max-h-[500px] overflow-y-auto">
         {articles.slice(0, 15).map((article, idx) => (
           <ArticleCard key={article.id} article={article} index={idx} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MergedSectionCard({ articles, sections }: { articles: NewsArticle[]; sections: string[] }) {
+  return (
+    <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
+      {/* 标题栏 */}
+      <div className="px-4 py-3 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 bg-neutral-400 rounded-full" />
+          <h2 className="font-medium text-neutral-100">其他热点</h2>
+        </div>
+        <span className="text-xs text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded-full">
+          {sections.join(' · ')}
+        </span>
+      </div>
+      
+      {/* 列表 */}
+      <div className="divide-y divide-neutral-800/50 max-h-[500px] overflow-y-auto">
+        {articles.slice(0, 15).map((article, idx) => (
+          <div key={article.id} className="relative">
+            <ArticleCard article={article} index={idx} showRank={false} />
+            {/* 来源标签 */}
+            <span className="absolute top-3 right-3 text-[10px] text-neutral-500 bg-neutral-800 px-1.5 py-0.5 rounded">
+              {article.section}
+            </span>
+          </div>
         ))}
       </div>
     </div>
@@ -106,9 +138,34 @@ export default function NewsFeed() {
     list.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
   })
 
+  // 合并元素少的 section（少于4条的合并到"其他"）
+  const MERGE_THRESHOLD = 4
+  const smallSections: string[] = []
+  const largeSections: string[] = []
+  
+  platforms.forEach(p => {
+    const count = groupedBySection[p]?.length ?? 0
+    if (count === 0) return
+    if (count < MERGE_THRESHOLD) {
+      smallSections.push(p)
+    } else {
+      largeSections.push(p)
+    }
+  })
+
+  // 合并小 section 的文章
+  const mergedArticles: NewsArticle[] = []
+  smallSections.forEach(section => {
+    groupedBySection[section]?.forEach(article => {
+      mergedArticles.push({ ...article, section })
+    })
+  })
+  // 按热度/排名排序
+  mergedArticles.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+
   const displaySections = selectedPlatform 
     ? [selectedPlatform] 
-    : platforms.filter(p => groupedBySection[p]?.length > 0)
+    : largeSections
 
   const totalCount = articles.length
 
@@ -120,8 +177,8 @@ export default function NewsFeed() {
           onClick={() => setSelectedPlatform(null)}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
             !selectedPlatform 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              ? 'bg-white text-black' 
+              : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
           }`}
         >
           全部 ({totalCount})
@@ -132,8 +189,8 @@ export default function NewsFeed() {
             onClick={() => setSelectedPlatform(section)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               selectedPlatform === section 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                ? 'bg-white text-black' 
+                : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
             }`}
           >
             {section} ({groupedBySection[section]?.length ?? 0})
@@ -150,10 +207,14 @@ export default function NewsFeed() {
             articles={groupedBySection[section] || []} 
           />
         ))}
+        {/* 合并的小列表 */}
+        {!selectedPlatform && mergedArticles.length > 0 && (
+          <MergedSectionCard articles={mergedArticles} sections={smallSections} />
+        )}
       </div>
       
-      {displaySections.length === 0 && (
-        <div className="text-center py-20 text-gray-500">
+      {displaySections.length === 0 && mergedArticles.length === 0 && (
+        <div className="text-center py-20 text-neutral-500">
           <p className="text-4xl mb-4">📭</p>
           <p>暂无数据</p>
         </div>

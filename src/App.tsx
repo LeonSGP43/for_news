@@ -48,9 +48,9 @@ export default function App() {
       </main>
       
       {/* 底部固定导航栏 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-neutral-800 z-50">
         {/* Tab 切换 + 状态 */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-900">
           <div className="flex gap-1">
             {tabs.map((tab) => (
               <button
@@ -58,8 +58,8 @@ export default function App() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    ? 'bg-white text-black'
+                    : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
                 }`}
               >
                 {tab.label}
@@ -67,13 +67,13 @@ export default function App() {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-neutral-500">
               {isLoading ? '加载中...' : `更新: ${lastUpdated}`}
             </span>
             <button
               onClick={loadData}
               disabled={isLoading}
-              className="p-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 rounded text-sm"
+              className="p-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 rounded text-sm"
               title="刷新数据"
             >
               🔄

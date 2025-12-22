@@ -52,8 +52,8 @@ export default function AnalysisDashboard() {
               onClick={() => setActiveTask(id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTask === id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  ? 'bg-white text-black'
+                  : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
               }`}
             >
               {TASK_INFO[id].icon} {TASK_INFO[id].name}
@@ -63,21 +63,21 @@ export default function AnalysisDashboard() {
         <button
           onClick={() => loadAnalysis(true)}
           disabled={isLoading}
-          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 rounded-lg text-xs"
+          className="px-3 py-1.5 bg-white text-black hover:bg-neutral-200 disabled:bg-neutral-800 disabled:text-neutral-500 rounded-lg text-xs"
         >
           {isLoading ? '分析中...' : '🔄 重新分析'}
         </button>
       </div>
 
       {/* 内容区 */}
-      <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-800/50 border-b border-gray-700/50 flex items-center justify-between">
+      <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
+        <div className="px-4 py-3 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">{TASK_INFO[activeTask]?.icon}</span>
-            <h2 className="font-medium text-gray-200">{TASK_INFO[activeTask]?.name}</h2>
+            <h2 className="font-medium text-neutral-100">{TASK_INFO[activeTask]?.name}</h2>
           </div>
           {data?.generatedAt && (
-            <span className="text-xs text-gray-500">生成于 {data.generatedAt}</span>
+            <span className="text-xs text-neutral-500">生成于 {data.generatedAt}</span>
           )}
         </div>
         
@@ -86,11 +86,11 @@ export default function AnalysisDashboard() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="flex gap-1 justify-center mb-3">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" />
-                  <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <span className="w-3 h-3 bg-neutral-400 rounded-full animate-bounce" />
+                  <span className="w-3 h-3 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <span className="w-3 h-3 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                 </div>
-                <p className="text-gray-500">AI 正在分析...</p>
+                <p className="text-neutral-500">AI 正在分析...</p>
               </div>
             </div>
           ) : data?.results?.[activeTask] ? (
@@ -98,7 +98,7 @@ export default function AnalysisDashboard() {
               <ReactMarkdown>{data.results[activeTask]}</ReactMarkdown>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="flex items-center justify-center h-64 text-neutral-500">
               <div className="text-center">
                 <p className="text-4xl mb-3">📊</p>
                 <p>点击"重新分析"开始</p>
