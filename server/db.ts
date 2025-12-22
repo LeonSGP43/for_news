@@ -18,7 +18,10 @@ function getPool(): mysql.Pool {
       database: process.env.DB_NAME || 'theNews',
       waitForConnections: true,
       connectionLimit: 10,
-      queueLimit: 0
+      queueLimit: 0,
+      connectTimeout: 60000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000
     })
   }
   return pool
