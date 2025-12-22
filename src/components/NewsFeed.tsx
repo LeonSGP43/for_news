@@ -5,7 +5,7 @@ function getTrendIcon(trend: string | null) {
   switch (trend) {
     case 'new': return '🆕'
     case 'rising': return '🔥'
-    case 'stable': return '➡️'
+    case 'stable': return ''
     case 'falling': return '📉'
     case 'returning': return '🔄'
     default: return ''
@@ -20,47 +20,79 @@ function formatHeat(heat: number | null, score: number | null) {
   return value.toString()
 }
 
-function ArticleCard({ article }: { article: NewsArticle }) {
+function ArticleCard({ article, index }: { article: NewsArticle; index: number }) {
   const heatDisplay = formatHeat(article.heat, article.score)
+  const trendIcon = getTrendIcon(article.trend)
   
   return (
     <a
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="block p-4 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors border border-gray-700 hover:border-gray-600"
+      className="group flex items-start gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-all"
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
-          {article.rank ?? '-'}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-gray-100 font-medium line-clamp-2 mb-1">
-            {getTrendIcon(article.trend)} {article.title}
-          </h3>
-          {article.description && (
-            <p className="text-gray-400 text-sm line-clamp-2 mb-2">
-              {article.description}
-            </p>
+      {/* 排名 */}
+      <div className={`flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${
+        index < 3 ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white' : 'bg-gray-700 text-gray-400'
+      }`}>
+        {article.rank ?? index + 1}
+      </div>
+      
+      {/* 内容 */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm text-gray-200 group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+          {trendIcon && <span className="mr-1">{trendIcon}</span>}
+          {article.title}
+        </h3>
+        
+        {/* 元信息 */}
+        <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+          {article.source && (
+            <span className="truncate max-w-[100px]">{article.source}</span>
           )}
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            {article.source && <span>📌 {article.source}</span>}
-            {heatDisplay && <span>🔥 {heatDisplay}</span>}
-            {article.time_str && <span>🕐 {article.time_str}</span>}
-            {article.rank_change !== null && article.rank_change !== 0 && (
-              <span className={article.rank_change > 0 ? 'text-green-400' : 'text-red-400'}>
-                {article.rank_change > 0 ? `↑${article.rank_change}` : `↓${Math.abs(article.rank_change)}`}
-              </span>
-            )}
-          </div>
+          {heatDisplay && (
+            <span className="text-orange-400">{heatDisplay}</span>
+          )}
+          {article.time_str && (
+            <span>{article.time_str}</span>
+          )}
+          {article.rank_change !== null && article.rank_change !== 0 && (
+            <span className={article.rank_change > 0 ? 'text-green-400' : 'text-red-400'}>
+              {article.rank_change > 0 ? `↑${article.rank_change}` : `↓${Math.abs(article.rank_change)}`}
+            </span>
+          )}
         </div>
       </div>
     </a>
   )
 }
 
+function SectionCard({ section, articles }: { section: string; articles: NewsArticle[] }) {
+  return (
+    <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden">
+      {/* 标题栏 */}
+      <div className="px-4 py-3 bg-gray-800/50 border-b border-gray-700/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 bg-blue-500 rounded-full" />
+          <h2 className="font-medium text-gray-200">{section}</h2>
+        </div>
+        <span className="text-xs text-gray-500 bg-gray-700/50 px-2 py-0.5 rounded-full">
+          {articles.length}
+        </span>
+      </div>
+      
+      {/* 列表 */}
+      <div className="divide-y divide-gray-700/30 max-h-[500px] overflow-y-auto">
+        {articles.slice(0, 15).map((article, idx) => (
+          <ArticleCard key={article.id} article={article} index={idx} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function NewsFeed() {
-  const { articles, platforms, selectedPlatform, setSelectedPlatform, lastUpdated, isLoading } = useStore()
+  const { articles, platforms, selectedPlatform, setSelectedPlatform } = useStore()
 
   // 按 section 分组
   const groupedBySection = articles.reduce((acc, article) => {
@@ -78,53 +110,54 @@ export default function NewsFeed() {
     ? [selectedPlatform] 
     : platforms.filter(p => groupedBySection[p]?.length > 0)
 
+  const totalCount = articles.length
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* 筛选栏 */}
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setSelectedPlatform(null)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            !selectedPlatform 
+              ? 'bg-blue-600 text-white' 
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+          }`}
+        >
+          全部 ({totalCount})
+        </button>
+        {platforms.map((section) => (
           <button
-            onClick={() => setSelectedPlatform(null)}
-            className={`px-3 py-1 rounded-full text-sm ${
-              !selectedPlatform ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
+            key={section}
+            onClick={() => setSelectedPlatform(section)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              selectedPlatform === section 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
           >
-            全部
+            {section} ({groupedBySection[section]?.length ?? 0})
           </button>
-          {platforms.map((section) => (
-            <button
-              key={section}
-              onClick={() => setSelectedPlatform(section)}
-              className={`px-3 py-1 rounded-full text-sm ${
-                selectedPlatform === section ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              {section} ({groupedBySection[section]?.length ?? 0})
-            </button>
-          ))}
-        </div>
-        <div className="text-sm text-gray-400">
-          {isLoading ? '加载中...' : `更新于 ${lastUpdated}`}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {displaySections.map((section) => (
-          <div key={section} className="bg-gray-850 rounded-xl p-4 border border-gray-700">
-            <h2 className="text-lg font-bold text-blue-400 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              {section}
-              <span className="text-sm text-gray-500 font-normal">
-                ({groupedBySection[section]?.length ?? 0})
-              </span>
-            </h2>
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {groupedBySection[section]?.slice(0, 20).map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
-          </div>
         ))}
       </div>
+
+      {/* 卡片网格 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {displaySections.map((section) => (
+          <SectionCard 
+            key={section} 
+            section={section} 
+            articles={groupedBySection[section] || []} 
+          />
+        ))}
+      </div>
+      
+      {displaySections.length === 0 && (
+        <div className="text-center py-20 text-gray-500">
+          <p className="text-4xl mb-4">📭</p>
+          <p>暂无数据</p>
+        </div>
+      )}
     </div>
   )
 }
