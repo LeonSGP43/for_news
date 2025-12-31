@@ -40,6 +40,18 @@ async function callWithRetry(prompt: string, maxRetries = 3): Promise<string> {
           parts: [{ text: prompt }]
         }]
       })
+      // console.log("resp_trace",response)
+      // 打印 token 消耗
+      const usage = response.usageMetadata
+      if (usage) {
+        console.log(`\n📊 ====== Token Usage [gemini-2.5-flash + Search] ======`)
+        console.log(`   📥 Prompt tokens:   ${usage.promptTokenCount || 0}`)
+        console.log(`   📤 Response tokens: ${usage.candidatesTokenCount || 0}`)
+        console.log(`   🧠 Thinking tokens: ${usage.thoughtsTokenCount || 0}`)
+        console.log(`   📈 Total tokens:    ${usage.totalTokenCount || 0}`)
+        console.log(`=======================================================\n`)
+      }
+      
       return response.text || ''
     } catch (error: unknown) {
       const err = error as { status?: number }
@@ -70,9 +82,10 @@ router.post('/trace', async (req, res) => {
 
   try {
     console.log('🔍 Trace request:', { title, source, locale })
+    // console.log('📋 Full prompt:\n', prompt)
     
     const text = await callWithRetry(prompt)
-    console.log('📝 Gemini response:', text.substring(0, 500) || '(empty)')
+    // console.log('📝 Gemini full response:\n', text)
     
     // 空响应时返回默认结果
     if (!text.trim()) {
@@ -98,7 +111,7 @@ router.post('/trace', async (req, res) => {
     }
 
     if (jsonResult) {
-      console.log('✅ Parsed result:', JSON.stringify(jsonResult).substring(0, 200))
+      // console.log('✅ Parsed result:\n', JSON.stringify(jsonResult, null, 2))
       return res.json(jsonResult)
     }
     

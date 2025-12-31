@@ -35,11 +35,21 @@ interface TokenUsage {
   totalTokens: number
 }
 
-function logTokenUsage(model: string, usage: TokenUsage) {
-  console.log(`📊 [${model}] Token消耗: 输入=${usage.promptTokens} 输出=${usage.responseTokens} 思考=${usage.thinkingTokens} 总计=${usage.totalTokens}`)
+async function logTokenUsage(model: string, usage: TokenUsage) {
+  console.log(`\n📊 ====== Token Usage [${model}] ======`)
+  console.log(`   📥 Prompt tokens:   ${usage.promptTokens}`)
+  console.log(`   📤 Response tokens: ${usage.responseTokens}`)
+  console.log(`   🧠 Thinking tokens: ${usage.thinkingTokens}`)
+  console.log(`   📈 Total tokens:    ${usage.totalTokens}`)
+  console.log(`=====================================\n`)
+  // 保存数据
+  
 }
 
 export async function generateAnalysis(prompt: string): Promise<string> {
+  // console.log('\n🤖 [Analysis] Gemini API Request')
+  // console.log('📋 Prompt:\n', prompt)
+  
   const response = await getAI().models.generateContentStream({
     model: 'gemini-3-pro-preview',
     config: analysisConfig,
@@ -59,6 +69,8 @@ export async function generateAnalysis(prompt: string): Promise<string> {
     }
   }
   
+  console.log('📤 Response:\n', result)
+  
   // 打印token消耗
   if (usageMetadata) {
     const meta = usageMetadata as Record<string, number>
@@ -74,6 +86,9 @@ export async function generateAnalysis(prompt: string): Promise<string> {
 }
 
 export async function generateChat(prompt: string): Promise<string> {
+  console.log('\n💬 [Chat] Gemini API Request')
+  console.log('📋 Prompt:\n', prompt)
+  
   const response = await getAI().models.generateContentStream({
     model: 'gemini-2.5-flash',
     contents: [{
@@ -91,6 +106,8 @@ export async function generateChat(prompt: string): Promise<string> {
       usageMetadata = chunk.usageMetadata
     }
   }
+  
+  // console.log('📤 Response:\n', result)
   
   // 打印token消耗
   if (usageMetadata) {

@@ -4,9 +4,10 @@ import { fetchArticles, fetchPlatforms } from './api'
 import NewsFeed from './components/NewsFeed'
 import AnalysisDashboard from './components/AnalysisDashboard'
 import GlobalSearch from './components/GlobalSearch'
+import PromptEditor from './components/PromptEditor'
 import { locales } from './i18n'
 
-type Tab = 'feed' | 'analysis'
+type Tab = 'feed' | 'analysis' | 'prompts'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('feed')
@@ -37,7 +38,8 @@ export default function App() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'feed', label: t.tabFeed },
-    { key: 'analysis', label: t.tabAnalysis }
+    { key: 'analysis', label: t.tabAnalysis },
+    { key: 'prompts', label: '⚙️ Prompts' }
   ]
 
   return (
@@ -46,6 +48,7 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 py-4">
         {activeTab === 'feed' && <NewsFeed />}
         {activeTab === 'analysis' && <AnalysisDashboard />}
+        {activeTab === 'prompts' && <PromptEditor />}
       </main>
       
       {/* 底部固定导航栏 */}

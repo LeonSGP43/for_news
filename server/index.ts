@@ -22,6 +22,7 @@ import { analysisRouter } from './routes/analysis'
 import { chatRouter } from './routes/chat'
 import { webhookRouter } from './routes/webhook'
 import { traceRouter } from './routes/trace'
+import { promptsRouter } from './routes/prompts'
 
 const app = express()
 const PORT = process.env.PORT || 3111
@@ -29,12 +30,27 @@ const PORT = process.env.PORT || 3111
 app.use(cors())
 app.use(express.json())
 
+// 日志中间件（已禁用）
+// app.use('/api', (req, res, next) => {
+//   const start = Date.now()
+//   const originalJson = res.json.bind(res)
+//   res.json = (body: unknown) => {
+//     const duration = Date.now() - start
+//     console.log(`\n📡 ${req.method} ${req.originalUrl} [${duration}ms]`)
+//     console.log(`📥 Request:`, req.method === 'GET' ? req.query : req.body)
+//     console.log(`📤 Response:`, JSON.stringify(body, null, 2))
+//     return originalJson(body)
+//   }
+//   next()
+// })
+
 // API Routes
 app.use('/api', articlesRouter)
 app.use('/api/analysis', analysisRouter)
 app.use('/api', chatRouter)
 app.use('/api', webhookRouter)
 app.use('/api', traceRouter)
+app.use('/api', promptsRouter)
 
 // Health check
 app.get('/api/health', (_, res) => {

@@ -65,14 +65,24 @@ export async function getSections() {
 }
 
 export async function getArticlesForAI(hours = 1) {
+  // 先获取最近一次爬取的时间
+  const latestSql = `
+    SELECT MAX(scraped_at) as latest FROM news_articles
+  `
+  const [latest] = await query<{ latest: Date }>(latestSql)
+  
+  if (!latest?.latest) {
+    return []
+  }
+  
+  // 获取最近一次爬取的全部数据（10分钟内的都算同一批）
   const sql = `
     SELECT title as t, description as d, \`rank\` as r, section as s
     FROM news_articles 
-    WHERE scraped_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)
+    WHERE scraped_at >= DATE_SUB(?, INTERVAL 10 MINUTE)
     ORDER BY section, \`rank\` ASC
-    LIMIT 2000
   `
-  return query(sql, [hours])
+  return query(sql, [latest.latest])
 }
 
 export default { getPool, initDB }
